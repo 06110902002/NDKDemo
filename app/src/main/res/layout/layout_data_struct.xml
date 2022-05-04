@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+
+        <Button
+            android:id="@+id/btn_link_list_add"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="链表添加元素">
+
+        </Button>
+
+        <Button
+            android:id="@+id/btn_link_list_del"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="链表删除元素">
+
+        </Button>
+
+        <Button
+            android:id="@+id/btn_stack"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="栈">
+
+        </Button>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+
+        <Button
+            android:id="@+id/btn_stack_moni_enqueue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="栈模拟入队">
+
+        </Button>
+
+        <Button
+            android:id="@+id/btn_stack_mini_de_queue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="栈模拟出队">
+
+        </Button>
+
+        <Button
+            android:id="@+id/btn_computer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="计算器">
+
+        </Button>
+
+        <Button
+            android:id="@+id/btn_mid_pre"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="中转前缀">
+
+        </Button>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/btn_array"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="C++二维数组">
+        </Button>
+
+        <Button
+            android:id="@+id/btn_migong"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="迷宫">
+        </Button>
+        <Button
+            android:id="@+id/btn_point"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="C++指针传值">
+        </Button>
+
+        <Button
+            android:id="@+id/btn_ref"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="C++引用传值">
+        </Button>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/btn_quick"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="C++快排">
+        </Button>
+        <Button
+            android:id="@+id/btn_list"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="单链表操作">
+        </Button>
+        <Button
+            android:id="@+id/btn_obj"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="内存相关">
+        </Button>
+        <Button
+            android:id="@+id/btn_lambda"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="lambda">
+        </Button>
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/btn_smart_point"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="智能指针">
+        </Button>
+        <Button
+            android:id="@+id/btn_get_obj"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="取对象">
+        </Button>
+        <Button
+            android:id="@+id/btn_recyc_obj"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="回收对象">
+        </Button>
+
+    </LinearLayout>
+</LinearLayout>
