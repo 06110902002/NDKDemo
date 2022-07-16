@@ -143,11 +143,18 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.btn_thread_safe_queue).setOnClickListener(new View.OnClickListener(){
+        findViewById(R.id.btn_thread_safe_produce_consumer).setOnClickListener(new View.OnClickListener(){
 
             @Override
             public void onClick(View view) {
+                nativeTest.produceConsumer();
+            }
+        });
+        findViewById(R.id.btn_stop_thread_safe_produce_consumer).setOnClickListener(new View.OnClickListener() {
 
+            @Override
+            public void onClick(View view) {
+                nativeTest.stopProduceConsumer();
             }
         });
 
@@ -183,6 +190,24 @@ public class MainActivity extends AppCompatActivity {
                 long nativePtr2 = nativeTest.bindNativePtr(nativePtr);
                 Log.v("184---","184-----nativePtr " + nativePtr + " nativePtr2:" + nativePtr2);
                 nativeTest.exeNativeWithNativePtr(nativePtr2);
+            }
+        });
+        findViewById(R.id.btn_native_msg_queue).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nativeTest.createNativeMsgQueue();
+            }
+        });
+        findViewById(R.id.btn_send_native_msg).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nativeTest.sendNativeMsg();
+            }
+        });
+        findViewById(R.id.btn_destory_msg_queue).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nativeTest.destoryQueue();
             }
         });
 

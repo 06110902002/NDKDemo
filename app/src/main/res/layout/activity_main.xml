@@ -74,17 +74,26 @@
         <Button
             android:id="@+id/btn_data_struct"
             android:text="数据结构"
+            android:textSize="10sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
         <Button
-            android:id="@+id/btn_thread_safe_queue"
+            android:id="@+id/btn_thread_safe_produce_consumer"
             android:text="生产者消费者"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_stop_thread_safe_produce_consumer"
+            android:text="停生/消费者"
+            android:textSize="10sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
         <Button
             android:id="@+id/btn_ffmpeg_cmd"
             android:text="ffmpeg命令行"
+            android:textSize="10sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 
@@ -106,13 +115,40 @@
         <Button
             android:id="@+id/btn_cache"
             android:text="缓存"
-            android:layout_width="wrap_content"
+            android:textSize="10sp"
+            android:layout_width="50dp"
             android:layout_height="wrap_content" />
 
         <Button
             android:id="@+id/btn_native_ptr"
-            android:text="java通过指针互调native"
-            android:textSize="12sp"
+            android:text="java通过指针互调底层"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_native_msg_queue"
+            android:text="底层消息队列"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_send_native_msg"
+            android:text="发送底层消息"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+    </LinearLayout>
+    <LinearLayout
+
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+        <Button
+            android:id="@+id/btn_destory_msg_queue"
+            android:text="销毁底层消息队列"
+            android:textSize="10sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
 

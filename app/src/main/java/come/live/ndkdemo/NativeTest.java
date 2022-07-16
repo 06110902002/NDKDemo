@@ -128,6 +128,8 @@ public class NativeTest {
 
     public native void produceConsumer();
 
+    public native void stopProduceConsumer();
+
 
     public native void testStack();
 
@@ -192,4 +194,14 @@ public class NativeTest {
      * @return
      */
     public native int exeNativeWithNativePtr(long nativePtr);
+
+    /**
+     * 创建底层消息队列
+     *
+     */
+    public native void createNativeMsgQueue();
+
+    public native void destoryQueue();
+
+    public native void sendNativeMsg();
 }

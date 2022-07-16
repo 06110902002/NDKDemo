@@ -40,6 +40,7 @@ add_library( # Sets the name of the library.
         struct/queue/FrameQueue.cpp
         utils/NDKStackUtils.cpp
         utils/JavaObjectMap.hpp
+        msgqueue/Handler.cpp
         )
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -60,6 +61,7 @@ find_library( # Sets the name of the path variable.
 include_directories(head
         model
         struct
+        msgqueue
         utils)   #头文件  放在cpp目录下也可以
 
 # Specifies libraries CMake should link to your target library. You

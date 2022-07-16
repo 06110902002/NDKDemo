@@ -15,6 +15,7 @@
 #include <ObjPool.h>
 #include <LruCache.h>
 #include <queue/FrameQueue.h>
+#include <Handler.h>
 #include "LogUtils.h"
 #include "utils/SafeQueue.h"
 #include "utils/Aircraft.h"
@@ -59,11 +60,11 @@ void testTemplateClass(){
 }
 
 
-
+jboolean startProConsumer = true;
 SafeQueue<char* > base;
 void *produce(void *args){
     int i = 0;
-    while(1){
+    while(startProConsumer){
         int tmp = i ++;
 
         char str[35];
@@ -72,19 +73,24 @@ void *produce(void *args){
         LOGV("65-----生产者生产 :%d  号商品,仓库中有:%d 个商品",tmp,base.size());
        sleep(0.04);
     }
+    LOGV("76-------生产者 停止工作");
+    pthread_exit(nullptr);
 }
 
 void *consumer(void *args){
-    while(1){
+    while(startProConsumer){
         char* tmp = base.pop();
 
         LOGV("65-----消费者消费 :%s ,仓库剩余：%d",tmp,base.size());
         sleep(0.01);
     }
+    LOGV("86-------消费者 停止工作");
+    pthread_exit(nullptr);
 }
 
 void testProduceAndComsuer(){
 
+    startProConsumer = true;
     //创建生产者线程
     // 创建一个线程id
     pthread_t produceThread;
@@ -748,7 +754,14 @@ JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_produceConsumer(JNIEnv *env, jobject thiz) {
     // TODO: implement produceConsumer()
 
-   // testProduceAndComsuer();
+    testProduceAndComsuer();
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_stopProduceConsumer(JNIEnv *env, jobject thiz) {
+    // TODO: implement stopProduceConsumer()
+    startProConsumer = false;
 }
 
 StackTest* stackTest;
@@ -1102,4 +1115,67 @@ Java_come_live_ndkdemo_NativeTest_exeNativeWithNativePtr(JNIEnv *env, jobject th
     native_ptr.p->fly();
 
     return 1;
+}
+
+/**------------------------测试消息队列------------------------*/
+MessageQueue* mMsgQueue;
+jboolean startMessageQueue = static_cast<jboolean>(true);
+Handler* mHandler;
+void *messageLoop(void *args){
+    while(startMessageQueue) {
+        AVMessage msg;
+        int retval = mHandler->msg_queue_get(mMsgQueue, &msg, 1);
+        if (retval < 0) {
+            LOGI("1118-------收到消息报错，退出循环 这种情况可以抛出异常");
+            break;
+        } else {
+            LOGI("1121-------收到 %d 消息",msg.what);
+            switch(msg.what) {
+                case 20220715:
+                   // mHandler->msg_free_res(&msg);
+                    break;
+            }
+
+        }
+        LOGI("1127-------消息loop 正在工作");
+    }
+    LOGI("1130-------消息loop 停止工作");
+    if (mHandler && mMsgQueue) {
+        mHandler->msg_queue_destroy(mMsgQueue);
+        delete mMsgQueue;
+        mMsgQueue = nullptr;
+        delete mHandler;
+        mHandler = nullptr;
+    }
+    pthread_exit(nullptr);
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_createNativeMsgQueue(JNIEnv *env, jobject thiz) {
+    // TODO: implement createNativeMsgQueue()
+    mMsgQueue = new MessageQueue();
+    mHandler = new Handler();
+    mHandler->msg_queue_init(mMsgQueue);
+    mHandler->msg_queue_start(mMsgQueue);
+
+    pthread_t msg_loop;
+    pthread_create(&msg_loop, nullptr, messageLoop, (void*)"messageLoop");
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_sendNativeMsg(JNIEnv *env, jobject thiz) {
+    // TODO: implement sendNativeMsg()
+    LOGI("1125-------发送消息  ");
+    for (int i = 0; i < 50; i++) {
+        mHandler->msg_queue_put_simple1(mMsgQueue,20220715);
+    }
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_destoryQueue(JNIEnv *env, jobject thiz) {
+    // TODO: implement destoryQueue()
+    startMessageQueue = static_cast<jboolean>(false);
+    LOGI("1153-------销毁队列 startMessageQueue = %d",startMessageQueue);
+    mHandler->msg_queue_abort(mMsgQueue);
+
 }
