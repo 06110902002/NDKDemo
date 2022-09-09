@@ -151,8 +151,25 @@
             android:textSize="10sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_test_map"
+            android:text="map"
+            android:textSize="10sp"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content" />
 
-
+        <Button
+            android:id="@+id/btn_test_readwrite_lock"
+            android:text="读写锁"
+            android:textSize="10sp"
+            android:layout_width="60dp"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_native_one_by_one"
+            android:text="一对一交替打印"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
     <FrameLayout

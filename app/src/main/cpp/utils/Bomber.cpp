@@ -17,4 +17,8 @@ int Bomber::min(int a, int b) {
     return a > b ? b : a;
 }
 
+void Bomber::stop() {
+    LOGV("21-----Bomber %s",__func__);
+}
+
 

@@ -12,3 +12,7 @@ void Aircraft::refuel() {
 
     LOGV("这是基类 refuel");
 }
+
+void Aircraft::stop() {
+    LOGV("这是基类 stop");
+}

@@ -130,6 +130,13 @@ public class NativeTest {
 
     public native void stopProduceConsumer();
 
+    public native void testReadWriteLock();
+
+    public native void stopReadWriteLock();
+
+    public native void oneByOnePrint();
+
+    public native void stopOneByOne();
 
     public native void testStack();
 
@@ -204,4 +211,6 @@ public class NativeTest {
     public native void destoryQueue();
 
     public native void sendNativeMsg();
+
+    public native void testMap();
 }

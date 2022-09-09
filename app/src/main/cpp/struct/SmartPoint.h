@@ -40,20 +40,54 @@ private:
      */
     T *m_ptr;
 
+
 public:
+    unsigned* use_count;
 
     SmartPoint(T *ptr) : m_ptr(ptr) {
+        use_count = new unsigned;
+        *use_count = 1;
+    }
 
+    SmartPoint(SmartPoint<T>& sptr) {
+        m_ptr = sptr.m_ptr;
+        use_count = sptr.use_count;
+        ++(*use_count);
+    }
+    /**
+     * 重载 = 运算符
+     * @param sptr
+     * @return
+     */
+    SmartPoint<T> &operator=(SmartPoint<T> &sptr) {
+        if (this == &sptr) {
+            return *this;
+        }
+        if (*use_count > 0) {
+            remove();
+        }
+        m_ptr = sptr;
+        use_count = sptr.use_count;
+        ++(*use_count);
+        return *this;
+    }
+
+    void remove() {
+        --(*use_count);
+        if (*use_count == 0) {
+            delete m_ptr;
+            m_ptr = nullptr;
+            delete use_count;
+            use_count = nullptr;
+        }
     }
 
     /**
      * 当本对象 （注意是对象存放在栈空间）释放时，将成员m_ptr指针变量指向的堆空间对象也释放
      */
     ~SmartPoint() {
-        if (m_ptr != nullptr) {
-            delete m_ptr;
-            m_ptr = nullptr;
-        }
+       remove();
+
     }
 
     /**
@@ -65,7 +99,5 @@ public:
     }
 
 };
-
-
 
 #endif //NDKDEMO_SMARTPOINT_H

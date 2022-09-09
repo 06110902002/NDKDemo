@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <LogUtils.h>
+#include <unistd.h>
 #include "Handler.h"
 
 Handler::Handler() {
@@ -238,7 +239,7 @@ AVMessage::~AVMessage() {
 }
 
 MessageQueue::MessageQueue() {
-
+    
 }
 
 MessageQueue::~MessageQueue() {

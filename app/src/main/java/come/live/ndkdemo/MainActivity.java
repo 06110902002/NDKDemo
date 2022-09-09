@@ -7,6 +7,7 @@ import java.util.List;
 import android.app.Activity;
 import android.content.Intent;
 import android.inputmethodservice.Keyboard;
+import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
 import android.text.InputType;
@@ -157,6 +158,34 @@ public class MainActivity extends AppCompatActivity {
                 nativeTest.stopProduceConsumer();
             }
         });
+        findViewById(R.id.btn_test_readwrite_lock).setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                LogUtils.v("启动 读写锁测试，5s 之后自动停止");
+                nativeTest.testReadWriteLock();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        nativeTest.stopReadWriteLock();
+                    }
+                },1000 * 5);
+            }
+        });
+        findViewById(R.id.btn_native_one_by_one).setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                LogUtils.v("启动 互斥锁一对一交替打印测试，5s 之后自动停止");
+                nativeTest.oneByOnePrint();
+                new Handler().postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        nativeTest.stopOneByOne();
+                    }
+                },1000 * 5);
+            }
+        });
 
 
 
@@ -208,6 +237,13 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 nativeTest.destoryQueue();
+            }
+        });
+        findViewById(R.id.btn_test_map).setOnClickListener(new View.OnClickListener(){
+
+            @Override
+            public void onClick(View view) {
+                nativeTest.testMap();
             }
         });
 

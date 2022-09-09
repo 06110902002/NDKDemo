@@ -30,7 +30,10 @@ public:
 
     int min(int a, int b);
 
-
+    /**
+     * 重写父类的stop函数
+     */
+    void stop();
 
 
 

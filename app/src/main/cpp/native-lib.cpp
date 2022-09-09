@@ -25,6 +25,8 @@
 #include "StackTest.h"
 #include "SmartPoint.h"
 #include "NDKStackUtils.h"
+#include <map>
+#include <queue>
 
 
 
@@ -591,6 +593,7 @@ void testVirture(Aircraft* aircraft){
     if(aircraft){
         aircraft->refuel();
         aircraft->fly();
+        aircraft->stop();
     }
 }
 
@@ -956,9 +959,16 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_smartPoint(JNIEnv *env, jobject thiz) {
     // TODO: implement smartPoint()
+    {
+        SmartPoint<Computer> sp(new Computer(2300));
+        LOGV("964-----use_count = %d",*sp.use_count);
+        SmartPoint<Computer> sp2 = sp;
+        LOGV("966-----use_count = %d",*sp2.use_count);
+        SmartPoint<Computer> sp3 = sp;
+        LOGV("968-----use_count = %d",*sp3.use_count);
+        sp->test();
+    }
 
-    SmartPoint<Computer> sp(new Computer(2300));
-    sp->test();
 
 }
 
@@ -1178,4 +1188,254 @@ Java_come_live_ndkdemo_NativeTest_destoryQueue(JNIEnv *env, jobject thiz) {
     LOGI("1153-------销毁队列 startMessageQueue = %d",startMessageQueue);
     mHandler->msg_queue_abort(mMsgQueue);
 
+}
+
+struct TestThreadParams {
+    char* m_name;
+    int m_id;
+    TestThreadParams(char* name,int id) : m_name(name),m_id(id) {
+
+    }
+    ~TestThreadParams() {
+        LOGI("TestThreadParams 析构了");
+    }
+};
+
+map<int , bool> m_socketConnectedMap;
+void* startReadDataTask(void* arg) {
+
+    TestThreadParams* parasm = (TestThreadParams*)arg;
+    while(parasm && m_socketConnectedMap[parasm->m_id]) {
+        LOGI("1206-----TestThreadParams = %p   name = %s  id =  %d ", parasm,parasm->m_name,parasm->m_id);
+        usleep(1000 * (parasm->m_id + 1) * 1000);
+        if (parasm->m_id == 1) {
+            usleep(1000 * 2 * 1000);
+            m_socketConnectedMap[parasm->m_id] = false;
+
+            for (auto it = m_socketConnectedMap.begin(); it != m_socketConnectedMap.end();){
+                if (it->first == 1) {
+                    m_socketConnectedMap.erase(it++);
+                    LOGV("停止残留线程 %d", 1);
+                    break;
+                }
+                it ++;
+            }
+            delete parasm;
+        }
+    }
+
+
+    return nullptr;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_testMap(JNIEnv *env, jobject thiz) {
+    // TODO: implement testMap()
+    map<int, char*>myMap{ {1,"A"},
+                          {2,"B"},
+                          {3,"C"},
+                          {4,"D"}
+    };
+    //使用下标插入
+    myMap[5] = const_cast<char *>("Tom");
+    LOGV("myMap size = %ld",myMap.size());
+    for (auto iter = myMap.begin(); iter != myMap.end(); ++iter) {
+        LOGI("1195-----key = %d  value = %s",iter->first, iter->second);
+    }
+
+    //查找
+    map<int, char*>::iterator it= myMap.find(2);
+    if (it != myMap.end()) {
+        LOGV("找到了 ")
+        myMap.erase (it); // b被成功删除
+    }
+    for (auto iter = myMap.begin(); iter != myMap.end(); ++iter) {
+        LOGI("1207-----key = %d  value = %s",iter->first, iter->second);
+    }
+
+//    for (int i = 0; i < 3; i ++) {
+//        pthread_t readMsgThreadId;
+//        TestThreadParams* testThreadParams = new TestThreadParams("abs",i);
+//        LOGI("1240------testThreadParams   = %p",testThreadParams);
+//        m_socketConnectedMap[i] = true;
+//        pthread_create(&readMsgThreadId, nullptr, startReadDataTask, testThreadParams);
+//
+//    }
+
+
+}
+
+
+/**
+ * 测试读写锁
+ * 读写锁是互斥锁的升级版，在做读操作的时候可以提高程序的执行效率，如果所有的线程都是做读操作, 那么读是并行的，但是使用互斥锁，读操作也是串行的。
+ * 读写锁是一把锁，锁的类型为 pthread_rwlock_t，有了类型之后就可以创建一把互斥锁了：
+ * 之所以称其为读写锁，是因为这把锁既可以锁定读操作，也可以锁定写操作。为了方便理解，可以大致认为在这把锁中记录了这些信息：
+    锁的状态：锁定 / 打开
+    锁定的是什么操作：读操作 / 写操作，使用读写锁锁定了读操作，需要先解锁才能去锁定写操作，反之亦然。
+    哪个线程将这把锁锁上了
+    读写锁的使用方式也互斥锁的使用方式是完全相同的：找共享资源，确定临界区，在临界区的开始位置加锁（读锁 / 写锁），临界区的结束位置解锁。
+
+    因为通过一把读写锁可以锁定读或者写操作，下面介绍一下关于读写锁的特点：
+
+    使用读写锁的读锁锁定了临界区，线程对临界区的访问是并行的，读锁是共享的。
+    使用读写锁的写锁锁定了临界区，线程对临界区的访问是串行的，写锁是独占的。
+    使用读写锁分别对两个临界区加了读锁和写锁，两个线程要同时访问者两个临界区，访问写锁临界区的线程继续运行，访问读锁临界区的线程阻塞，因为写锁比读锁的优先级高。
+
+
+    作者: 苏丙榅
+    链接: https://subingwen.cn/linux/thread-sync/#4-1-%E8%AF%BB%E5%86%99%E9%94%81%E5%87%BD%E6%95%B0
+    来源: 爱编程的大丙
+    著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+ */
+
+// 全局变量
+int number = 0;
+// 定义读写锁
+pthread_rwlock_t rwlock;
+
+int startWrite = 0;
+int startRead = 0;
+
+// 写的线程的处理函数
+void* writeNum(void* arg)
+{
+    while(startWrite) {
+        // 在程序中对读写锁加写锁, 锁定的是写操作
+        pthread_rwlock_wrlock(&rwlock);
+        int cur = number;
+        cur ++;
+        number = cur;
+        LOGI("写操作完毕, number : %d, tid = %ld\n", number, pthread_self());
+        pthread_rwlock_unlock(&rwlock);
+        // 添加sleep目的是要看到多个线程交替工作
+        usleep(1000 * 1000);
+    }
+
+    return NULL;
+}
+
+// 读线程的处理函数
+// 多个线程可以如果处理动作相同, 可以使用相同的处理函数
+// 每个线程中的栈资源是独享
+void* readNum(void* arg) {
+    while(startRead) {
+        // 在程序中对读写锁加读锁, 锁定的是读操作
+        pthread_rwlock_rdlock(&rwlock);
+        LOGI("读操作完, number = %d, tid = %ld\n", number, pthread_self());
+        pthread_rwlock_unlock(&rwlock);
+        usleep(1000 * 500);
+    }
+    return NULL;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_testReadWriteLock(JNIEnv *env, jobject thiz) {
+
+    startRead = 1;
+    startWrite = 1;
+    // 初始化读写锁
+    pthread_rwlock_init(&rwlock, NULL);
+    // 3个写线程, 5个读的线程
+    pthread_t wtid[3];
+    pthread_t rtid[5];
+    for(int i=0; i<3; ++i) {
+        pthread_create(&wtid[i], NULL, writeNum, NULL);
+    }
+
+    for(int i=0; i<5; ++i) {
+        pthread_create(&rtid[i], NULL, readNum, NULL);
+    }
+
+    // 释放资源 调用本函数的 线程将阻塞直到 创建的线程完毕
+//    for(int i=0; i<3; ++i) {
+//        pthread_join(wtid[i], NULL);
+//    }
+//
+//    for(int i=0; i<5; ++i) {
+//        pthread_join(rtid[i], NULL);
+//    }
+    LOGI("读写测试例子结束");
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_stopReadWriteLock(JNIEnv *env, jobject thiz) {
+    startRead = 0;
+    startWrite = 0;
+    // 销毁读写锁
+    pthread_rwlock_destroy(&rwlock);
+}
+
+/**
+ * 测试一对一  交替打印
+ */
+
+int printData = 0;
+//互斥锁
+pthread_mutex_t oneMutex;
+pthread_cond_t oneCond;
+int startA = 0;
+int startB = 0;
+int isPrinting = 0;
+
+void* printA(void* arg) {
+    while(startA) {
+        pthread_mutex_lock(&oneMutex);
+        while (!isPrinting) {
+            LOGI("A 正在打印  阻塞");
+            pthread_cond_wait(&oneCond,&oneMutex);
+        }
+        printData ++;
+        LOGI("A 打印 printData : %d 唤醒B 打印\n", printData);
+        pthread_cond_signal(&oneCond);
+        isPrinting = 0;
+        pthread_mutex_unlock(&oneMutex);
+        // 添加sleep目的是要看到多个线程交替工作
+        usleep(1000 * 1000);
+    }
+
+    return NULL;
+}
+
+void* printB(void* arg) {
+    while(startB) {
+        pthread_mutex_lock(&oneMutex);
+        while (isPrinting) {
+            LOGI("B 正在打印  阻塞");
+            pthread_cond_wait(&oneCond,&oneMutex);
+        }
+        printData ++;
+        LOGI("B 打印 printData : %d 唤醒A 打印\n", printData);
+        pthread_cond_signal(&oneCond);
+        isPrinting = 1;
+        pthread_mutex_unlock(&oneMutex);
+        usleep(1000 * 500);
+    }
+    return NULL;
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_oneByOnePrint(JNIEnv *env, jobject thiz) {
+
+    startA = 1;
+    startB = 1;
+    pthread_mutex_init(&oneMutex, NULL);
+    pthread_cond_init(&oneCond,NULL);
+    pthread_t aTid;
+    pthread_t bTid;
+    pthread_create(&aTid, NULL, printA, NULL);
+    pthread_create(&bTid, NULL, printB, NULL);
+
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_stopOneByOne(JNIEnv *env, jobject thiz) {
+    startA = 0;
+    startB = 0;
+    pthread_mutex_destroy(&oneMutex);
+    pthread_cond_destroy(&oneCond);
 }
