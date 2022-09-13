@@ -166,7 +166,27 @@
             android:layout_height="wrap_content" />
         <Button
             android:id="@+id/btn_native_one_by_one"
-            android:text="一对一交替打印"
+            android:text="交替打印"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_cpp_thread"
+            android:text="C++线程"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <LinearLayout
+
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="50dp">
+
+        <Button
+            android:id="@+id/btn_r_value_ref"
+            android:text="右值引用"
             android:textSize="10sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />

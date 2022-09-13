@@ -138,6 +138,8 @@ public class NativeTest {
 
     public native void stopOneByOne();
 
+    public native void testThreadCpp();
+
     public native void testStack();
 
     public native void stackMoniEnqueue(int e);
@@ -213,4 +215,6 @@ public class NativeTest {
     public native void sendNativeMsg();
 
     public native void testMap();
+
+    public native void testRValueRef();
 }

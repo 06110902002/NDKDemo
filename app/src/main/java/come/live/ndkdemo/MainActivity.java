@@ -186,7 +186,20 @@ public class MainActivity extends AppCompatActivity {
                 },1000 * 5);
             }
         });
+        findViewById(R.id.btn_cpp_thread).setOnClickListener(new View.OnClickListener() {
 
+            @Override
+            public void onClick(View view) {
+                nativeTest.testThreadCpp();
+            }
+        });
+        findViewById(R.id.btn_r_value_ref).setOnClickListener(new View.OnClickListener() {
+
+            @Override
+            public void onClick(View view) {
+                nativeTest.testRValueRef();
+            }
+        });
 
 
 

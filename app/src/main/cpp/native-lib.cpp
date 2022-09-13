@@ -27,8 +27,10 @@
 #include "NDKStackUtils.h"
 #include <map>
 #include <queue>
+#include <thread>
+#include <future>
 
-
+using namespace std;
 
 
 pthread_t pthread;//线程对象
@@ -37,70 +39,71 @@ pthread_t pthread;//线程对象
 
 
 
-template <typename T>
+template<typename T>
 int testTemplateMethod(T a, T b) {
 
     return a + b;
 }
 
-void test(){
+void test() {
     int a = 10;
     char b = 'b';
-    int result = testTemplateMethod<int>(a ,b);
+    int result = testTemplateMethod<int>(a, b);
     LOGV("泛型函数调用:%d", result);
 }
 
 
-void testTemplateClass(){
+void testTemplateClass() {
     SafeQueue<int> q;
 
     q.push(6);
     q.push(7);
 
-    LOGV("38-----队列中第一个删除的元素为:  %d",q.pop());
-    LOGV("39-----队列中第二个删除的元素为:  %d  size:%d",q.pop(),q.size());
+    LOGV("38-----队列中第一个删除的元素为:  %d", q.pop());
+    LOGV("39-----队列中第二个删除的元素为:  %d  size:%d", q.pop(), q.size());
 }
 
 
 jboolean startProConsumer = true;
-SafeQueue<char* > base;
-void *produce(void *args){
+SafeQueue<char *> base;
+
+void *produce(void *args) {
     int i = 0;
-    while(startProConsumer){
-        int tmp = i ++;
+    while (startProConsumer) {
+        int tmp = i++;
 
         char str[35];
-        sprintf(str,"商品%d",tmp);
+        sprintf(str, "商品%d", tmp);
         base.push(str);
-        LOGV("65-----生产者生产 :%d  号商品,仓库中有:%d 个商品",tmp,base.size());
-       sleep(0.04);
+        LOGV("65-----生产者生产 :%d  号商品,仓库中有:%d 个商品", tmp, base.size());
+        sleep(0.04);
     }
     LOGV("76-------生产者 停止工作");
     pthread_exit(nullptr);
 }
 
-void *consumer(void *args){
-    while(startProConsumer){
-        char* tmp = base.pop();
+void *consumer(void *args) {
+    while (startProConsumer) {
+        char *tmp = base.pop();
 
-        LOGV("65-----消费者消费 :%s ,仓库剩余：%d",tmp,base.size());
+        LOGV("65-----消费者消费 :%s ,仓库剩余：%d", tmp, base.size());
         sleep(0.01);
     }
     LOGV("86-------消费者 停止工作");
     pthread_exit(nullptr);
 }
 
-void testProduceAndComsuer(){
+void testProduceAndComsuer() {
 
     startProConsumer = true;
     //创建生产者线程
     // 创建一个线程id
     pthread_t produceThread;
-    pthread_create(&produceThread, nullptr, produce, (void*)"produce");
+    pthread_create(&produceThread, nullptr, produce, (void *) "produce");
 
 
     pthread_t comsumerThread;
-    pthread_create(&comsumerThread, nullptr, consumer, (void*)"consumer");
+    pthread_create(&comsumerThread, nullptr, consumer, (void *) "consumer");
 
 }
 
@@ -109,7 +112,7 @@ jobject gCallBackObj;
 jmethodID gCallBackMid;
 jmethodID onJavaByteId;
 
-jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved){
+jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved) {
     LOGV("317--------JNI_OnLoad");
     gvm = vm;
     test();
@@ -119,10 +122,9 @@ jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved){
 }
 
 
-
 extern "C" JNIEXPORT jstring JNICALL
 Java_come_live_ndkdemo_MainActivity_stringFromJNI(
-        JNIEnv* env,
+        JNIEnv *env,
         jobject /* this */) {
     std::string hello = "Hello from C++";
     LOGI("26------hello");
@@ -135,7 +137,7 @@ Java_come_live_ndkdemo_NativeTest_testCallNativeMethod(JNIEnv *env, jobject thiz
 
     //先找类对象
     jclass nativeTest = env->FindClass("come/live/ndkdemo/NativeTest");
-    if( nativeTest == NULL){
+    if (nativeTest == NULL) {
         LOGV("找不到nativeTest类对象");
         return NULL;
     }
@@ -160,7 +162,8 @@ Java_come_live_ndkdemo_NativeTest_testCallNativeMethod(JNIEnv *env, jobject thiz
     /**
      * 查找要调用的方法
      */
-    jmethodID nativeCallJavaMethod = env->GetMethodID(nativeTest,"nativeCallJavaMethod","(ILjava/lang/String;)V");
+    jmethodID nativeCallJavaMethod = env->GetMethodID(nativeTest, "nativeCallJavaMethod",
+                                                      "(ILjava/lang/String;)V");
     if (nativeCallJavaMethod == NULL) {
         LOGV("nativeCallJavaMethod 未找到，直接释放类对象与实例对象");
         env->DeleteLocalRef(nativeTest);
@@ -170,46 +173,50 @@ Java_come_live_ndkdemo_NativeTest_testCallNativeMethod(JNIEnv *env, jobject thiz
     /**
      * 构造参数
      */
-    jstring jstrMSG =env->NewStringUTF( "Hi,I'm From C");
-    env->CallVoidMethod(nativeTestObject,nativeCallJavaMethod,3,jstrMSG);
+    jstring jstrMSG = env->NewStringUTF("Hi,I'm From C");
+    env->CallVoidMethod(nativeTestObject, nativeCallJavaMethod, 3, jstrMSG);
 
     /**
      * 调用java 静态方法
      */
-    jmethodID nativeCallJavaStaticMethod = env->GetStaticMethodID(nativeTest,"nativeCallJavaStaticMethod","()V");
-    env->CallStaticVoidMethod(nativeTest,nativeCallJavaStaticMethod);
+    jmethodID nativeCallJavaStaticMethod = env->GetStaticMethodID(nativeTest,
+                                                                  "nativeCallJavaStaticMethod",
+                                                                  "()V");
+    env->CallStaticVoidMethod(nativeTest, nativeCallJavaStaticMethod);
 
     /**
      * 调用java 带返回值的方法
      */
-    jmethodID getStringForJava = env->GetMethodID(nativeTest,"getStringForJava","()Ljava/lang/String;");
-    if(getStringForJava == NULL){
+    jmethodID getStringForJava = env->GetMethodID(nativeTest, "getStringForJava",
+                                                  "()Ljava/lang/String;");
+    if (getStringForJava == NULL) {
         LOGV("getStringForJava 未找到，直接释放类对象与实例对象");
         env->DeleteLocalRef(nativeTest);
         env->DeleteLocalRef(nativeTestObject);
         return NULL;
     }
 
-    jstring result = static_cast<jstring>(env->CallObjectMethod(nativeTestObject, getStringForJava));
+    jstring result = static_cast<jstring>(env->CallObjectMethod(nativeTestObject,
+                                                                getStringForJava));
     /**
      * jni 不能直接使用java 对象，需要将jstring转换为c 对象
      */
     const char *resultChar = env->GetStringUTFChars(result, NULL);
-    LOGV("调用java 方法 getStringForJava 获取 的返回值为:%s",resultChar);
+    LOGV("调用java 方法 getStringForJava 获取 的返回值为:%s", resultChar);
 
     /**
      * 获取对象实例属性
      */
-    jfieldID ageId = env->GetFieldID(nativeTest,"age","I");
-    jint age = env->GetIntField(nativeTestObject,ageId);
-    LOGV("获取对象NativeTest 实例属性 age 值为：%d",age);
+    jfieldID ageId = env->GetFieldID(nativeTest, "age", "I");
+    jint age = env->GetIntField(nativeTestObject, ageId);
+    LOGV("获取对象NativeTest 实例属性 age 值为：%d", age);
 
 
     /**--------------------------------回调byte[]函数---------------------------------------------*/
     /**
      * 查找要调用的方法
      */
-    jmethodID onByte = env->GetMethodID(nativeTest,"onByte","([BI)V");
+    jmethodID onByte = env->GetMethodID(nativeTest, "onByte", "([BI)V");
     if (onByte == NULL) {
         LOGV("nativeCallJavaMethod 未找到，直接释放类对象与实例对象");
         env->DeleteLocalRef(nativeTest);
@@ -222,8 +229,8 @@ Java_come_live_ndkdemo_NativeTest_testCallNativeMethod(JNIEnv *env, jobject thiz
     char *m_body = "0123456789abc&*()";
     int len = 9;
     char *tmp = new char[len];
-    memset(tmp,0,len);
-    memcpy(tmp,m_body + 2,len);
+    memset(tmp, 0, len);
+    memcpy(tmp, m_body + 2, len);
 
     //转换
     jbyteArray jbArray = env->NewByteArray(len);
@@ -276,18 +283,17 @@ Java_come_live_ndkdemo_NativeTest_callNativeArray(JNIEnv *env, jobject thiz) {
         LOGI("数组元素：%d", int_arr_temp[i]);
     }
 
-    env->ReleaseIntArrayElements(jint_arr_temp,0,2);
+    env->ReleaseIntArrayElements(jint_arr_temp, 0, 2);
 
     return env->NewStringUTF("hello.c_str()");
 
 }
 
 
-
 /**-----------------测试函数调用栈-------------*/
 void fun1() {
     NDKStackUtils ndkStackUtils;
-    ndkStackUtils.callstackLogcat(ANDROID_LOG_DEBUG,"testNDKDebug");
+    ndkStackUtils.callstackLogcat(ANDROID_LOG_DEBUG, "testNDKDebug");
 }
 
 void fun2() {
@@ -348,13 +354,14 @@ Java_come_live_ndkdemo_NativeTest_sumArray(JNIEnv *env, jobject thiz, jintArray 
 
 
 
-extern "C" JNIEXPORT jintArray JNICALL Java_come_live_ndkdemo_NativeTest_getNativeArray(JNIEnv *env, jobject thiz) {
+extern "C" JNIEXPORT jintArray JNICALL
+Java_come_live_ndkdemo_NativeTest_getNativeArray(JNIEnv *env, jobject thiz) {
     // TODO: implement getNativeArray()
 
     /**
      * 定义一个native 数组，jni 可直接操作
      */
-    jint nativeArr[10] = {0,1,2,3,4,5,6,7,8,9};
+    jint nativeArr[10] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9};
 
     /**
      * 通过当前线程中 java在jni 环境的代表 env实例化一个数组
@@ -393,7 +400,7 @@ Java_come_live_ndkdemo_NativeTest_createArrayMethod(JNIEnv *env, jobject thiz, j
     jint *arr = env->GetIntArrayElements(jarr, NULL);
     //3.赋值
     int i = 0;
-    for(; i < len; i++){
+    for (; i < len; i++) {
         arr[i] = i;
     }
     //4.释放资源
@@ -419,31 +426,32 @@ Java_come_live_ndkdemo_NativeTest_passJavaObj2Native(JNIEnv *env, jobject thiz, 
 
     //先找类对象
     jclass personClz = env->GetObjectClass(person);
-    if( personClz == NULL){
+    if (personClz == NULL) {
         LOGV("找不到personClz类对象");
-        return ;
+        return;
     }
 
 
-    jfieldID nameId  = env->GetFieldID(personClz , "name", "Ljava/lang/String;");
+    jfieldID nameId = env->GetFieldID(personClz, "name", "Ljava/lang/String;");
     jstring nameStr = static_cast<jstring>(env->GetObjectField(person, nameId));
-    const char * c_name = env->GetStringUTFChars(nameStr ,NULL);//转换成 char *
-    LOGV("235-------获取java 传过来的person 对象 name属性值为：%s",c_name);
-    env->ReleaseStringUTFChars(nameStr,c_name);
+    const char *c_name = env->GetStringUTFChars(nameStr, NULL);//转换成 char *
+    LOGV("235-------获取java 传过来的person 对象 name属性值为：%s", c_name);
+    env->ReleaseStringUTFChars(nameStr, c_name);
 
 
-    jmethodID getNameId = env->GetMethodID(personClz,"getName","()Ljava/lang/String;");
+    jmethodID getNameId = env->GetMethodID(personClz, "getName", "()Ljava/lang/String;");
     jstring name = static_cast<jstring>(env->CallObjectMethod(person, getNameId));
-    const char * c_name2 = env->GetStringUTFChars(name ,NULL);//转换成 char *
-    LOGV("247------获取java 传过来的person 对象 name属性值为：%s",c_name2);
+    const char *c_name2 = env->GetStringUTFChars(name, NULL);//转换成 char *
+    LOGV("247------获取java 传过来的person 对象 name属性值为：%s", c_name2);
 
-    env->ReleaseStringUTFChars(name,c_name2);
+    env->ReleaseStringUTFChars(name, c_name2);
     env->DeleteLocalRef(personClz);
 
 
 }extern "C"
 JNIEXPORT void JNICALL
-Java_come_live_ndkdemo_NativeTest_nativeCallJavaMethod(JNIEnv *env, jobject thiz, jint age, jstring name) {
+Java_come_live_ndkdemo_NativeTest_nativeCallJavaMethod(JNIEnv *env, jobject thiz, jint age,
+                                                       jstring name) {
     // TODO: implement nativeCallJavaMethod()
 
 
@@ -454,29 +462,29 @@ Java_come_live_ndkdemo_NativeTest_getListFromNative(JNIEnv *env, jobject thiz) {
     // TODO: implement getListFromNative()
     //获得ArrayList类引用
     jclass list_cls = env->FindClass("java/util/ArrayList");
-    if(list_cls == NULL){
+    if (list_cls == NULL) {
         LOGV("查找集合java/util/ArrayList失败");
         return NULL;
     }
     /**
      * 查找构造方法
      */
-    jmethodID list_contruct = env->GetMethodID(list_cls,"<init>","()V");
-    if(list_contruct == NULL){
+    jmethodID list_contruct = env->GetMethodID(list_cls, "<init>", "()V");
+    if (list_contruct == NULL) {
         LOGV("构造方法查找失败");
         return NULL;
     }
     /**
      * 创建ArrayList实例对象
      */
-    jobject list_obj = env->NewObject(list_cls,list_contruct);
-    jmethodID list_add = env->GetMethodID(list_cls,"add","(Ljava/lang/Object;)Z");
+    jobject list_obj = env->NewObject(list_cls, list_contruct);
+    jmethodID list_add = env->GetMethodID(list_cls, "add", "(Ljava/lang/Object;)Z");
 
 
     jclass personClz = env->FindClass("come/live/ndkdemo/Person");
-    jmethodID person_construct = env->GetMethodID(personClz,"<init>","()V");
-    jmethodID person_setAge = env->GetMethodID(personClz,"setAge","(I)V");
-    jmethodID person_setName = env->GetMethodID(personClz,"setName", "(Ljava/lang/String;)V");
+    jmethodID person_construct = env->GetMethodID(personClz, "<init>", "()V");
+    jmethodID person_setAge = env->GetMethodID(personClz, "setAge", "(I)V");
+    jmethodID person_setName = env->GetMethodID(personClz, "setName", "(Ljava/lang/String;)V");
 
 
     for (jint i = 0; i < 5; i++) {
@@ -500,11 +508,6 @@ Java_come_live_ndkdemo_NativeTest_getListFromNative(JNIEnv *env, jobject thiz) {
 
     return list_obj;
 }
-
-
-
-
-
 
 
 /**
@@ -537,7 +540,7 @@ void *writeFile(void *args) {
 
 
         /**--------------------------------回调byte[]函数---------------------------------------------*/
-        while(true) {
+        while (true) {
             /**
              * 构造参数
              */
@@ -572,14 +575,15 @@ void *writeFile(void *args) {
 
 extern "C"
 JNIEXPORT void JNICALL
-Java_come_live_ndkdemo_NativeTest_nativeInThreadCallBack(JNIEnv *env, jobject thiz, jobject listener) {
+Java_come_live_ndkdemo_NativeTest_nativeInThreadCallBack(JNIEnv *env, jobject thiz,
+                                                         jobject listener) {
     // TODO: implement nativeInThreadCallBack()
 
     // 创建一个jni中的全局引用
     gCallBackObj = env->NewGlobalRef(listener);
     jclass cls = env->GetObjectClass(listener);
     gCallBackMid = env->GetMethodID(cls, "onSuccess", "(Ljava/lang/String;)V");
-    onJavaByteId = env->GetMethodID(cls, "onByte","([BI)V");
+    onJavaByteId = env->GetMethodID(cls, "onByte", "([BI)V");
 
 
     // 创建一个线程
@@ -589,8 +593,8 @@ Java_come_live_ndkdemo_NativeTest_nativeInThreadCallBack(JNIEnv *env, jobject th
     env->DeleteLocalRef(cls);
 }
 
-void testVirture(Aircraft* aircraft){
-    if(aircraft){
+void testVirture(Aircraft *aircraft) {
+    if (aircraft) {
         aircraft->refuel();
         aircraft->fly();
         aircraft->stop();
@@ -603,7 +607,7 @@ JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_testNativeVirtureMethod(JNIEnv *env, jobject thiz) {
     // TODO: implement testNativeVirtureMethod()
 
-    Bomber* bomber = new Bomber();
+    Bomber *bomber = new Bomber();
     testVirture(bomber);
     bomber->attack();
 }
@@ -630,10 +634,9 @@ int min(int a, int b) {
  * @param d
  * @param f
  */
-void funcPointAsParmas(int e, int d, int(*f)(int a, int b)){
-    LOGV("434-----------函数指针当作参数传递:%d",f(e, d));
+void funcPointAsParmas(int e, int d, int(*f)(int a, int b)) {
+    LOGV("434-----------函数指针当作参数传递:%d", f(e, d));
 }
-
 
 
 /*
@@ -661,7 +664,7 @@ Java_come_live_ndkdemo_NativeTest_testNativeFucPoint(JNIEnv *env, jobject thiz) 
     int tmpMin = (bomber->p)(-9, 0);
     LOGV("函数指针求得的最小值：%d", tmpMin);
 
-    funcPointAsParmas(2,12,max);
+    funcPointAsParmas(2, 12, max);
 
 }
 
@@ -693,61 +696,61 @@ Java_come_live_ndkdemo_NativeTest_dataStructTest(JNIEnv *env, jobject thiz) {
     // TODO: implement dataStructTest()
 
 
-    auto* blockQueue = new BlockQueue<int>();
-    auto* a = new Node<int>();
+    auto *blockQueue = new BlockQueue<int>();
+    auto *a = new Node<int>();
     a->data = 2;
     a->next = nullptr;
     blockQueue->add(a);
 
-    auto* b = new Node<int>();
+    auto *b = new Node<int>();
     b->data = 3;
     b->next = nullptr;
     blockQueue->add(b);
 
-    Node<int>* tmp = blockQueue->pop();
-    LOGV("543------获取链表头元素:%d",tmp->data);
+    Node<int> *tmp = blockQueue->pop();
+    LOGV("543------获取链表头元素:%d", tmp->data);
 
-    Node<int>* p = blockQueue->head;
-    while(p){
-        LOGV("53------:%d",p->data);
+    Node<int> *p = blockQueue->head;
+    while (p) {
+        LOGV("53------:%d", p->data);
         p = p->next;
     }
 
 
     vector<int> vector;
 
-    for (int i = 1; i <= 10; i++){
+    for (int i = 1; i <= 10; i++) {
         vector.push_back(i);
     }
     int s = vector.front();
     vector.erase(vector.begin());
-    LOGV("553--------:%d",s);
-    for (auto ir = vector.crbegin(); ir != vector.crend(); ++ir){
-        LOGV("555----------:%d",*ir);
+    LOGV("553--------:%d", s);
+    for (auto ir = vector.crbegin(); ir != vector.crend(); ++ir) {
+        LOGV("555----------:%d", *ir);
     }
 
 
-    SafeQueue<VideoFrame*> frameQueue;
-    threadsafe_queue<VideoFrame*> frameQueue2;
+    SafeQueue<VideoFrame *> frameQueue;
+    threadsafe_queue<VideoFrame *> frameQueue2;
 
-    for(int i = 0; i < 10; i ++){
-        uint8_t* buff = int2Bytes(i * 10);
-        VideoFrame* frame = new VideoFrame(buff,23,100 + i);
+    for (int i = 0; i < 10; i++) {
+        uint8_t *buff = int2Bytes(i * 10);
+        VideoFrame *frame = new VideoFrame(buff, 23, 100 + i);
         frameQueue.push(frame);
 
         frameQueue2.push(frame);
     }
 
-   /* while(frameQueue.size() > 0){
-        VideoFrame* head = frameQueue.pop();
-        LOGV(" 589------测试type: %d  length is: %d",head->type,head->length);
-    }*/
+    /* while(frameQueue.size() > 0){
+         VideoFrame* head = frameQueue.pop();
+         LOGV(" 589------测试type: %d  length is: %d",head->type,head->length);
+     }*/
 
-    LOGV("596-------frameQueue2是否为空：%d   元素个数:%d",frameQueue2.empty(),frameQueue2.size());
-    while(!frameQueue2.empty()){
-        VideoFrame* head;
+    LOGV("596-------frameQueue2是否为空：%d   元素个数:%d", frameQueue2.empty(), frameQueue2.size());
+    while (!frameQueue2.empty()) {
+        VideoFrame *head;
         frameQueue2.wait_and_pop(head);
-        LOGV(" 598------测试type: %d  length is: %d",head->type,head->length);
+        LOGV(" 598------测试type: %d  length is: %d", head->type, head->length);
     }
 
 }
@@ -767,14 +770,14 @@ Java_come_live_ndkdemo_NativeTest_stopProduceConsumer(JNIEnv *env, jobject thiz)
     startProConsumer = false;
 }
 
-StackTest* stackTest;
+StackTest *stackTest;
 
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_testStack(JNIEnv *env, jobject thiz) {
     // TODO: implement testStack()
-    if(stackTest == nullptr){
+    if (stackTest == nullptr) {
         stackTest = new StackTest();
     }
     stackTest->testBaseUse();
@@ -787,53 +790,53 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_stackMoniDeQueue(JNIEnv *env, jobject thiz) {
     // TODO: implement stackMoniDeQueue()
-    if(stackTest == nullptr){
+    if (stackTest == nullptr) {
         stackTest = new StackTest();
     }
     int head = stackTest->moniDeQueue();
-    LOGV("632------出队元素:%d",head);
+    LOGV("632------出队元素:%d", head);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_stackMoniEnqueue(JNIEnv *env, jobject thiz, jint e) {
-    if(stackTest == nullptr){
+    if (stackTest == nullptr) {
         stackTest = new StackTest();
     }
-    stackTest->moniEnqueue((int)e);
+    stackTest->moniEnqueue((int) e);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_computer(JNIEnv *env, jobject thiz, jstring s) {
     // TODO: implement computer()
-    if(stackTest == nullptr){
+    if (stackTest == nullptr) {
         stackTest = new StackTest();
     }
-    const char* s2 = env->GetStringUTFChars(s, 0);
+    const char *s2 = env->GetStringUTFChars(s, 0);
 
-    float result = stackTest->computer((char*)s2);
-    LOGV("661------式子：%s  计算结果为:%f",s2,result);
+    float result = stackTest->computer((char *) s2);
+    LOGV("661------式子：%s  计算结果为:%f", s2, result);
 }
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_mid2Pre(JNIEnv *env, jobject thiz, jstring s) {
     // TODO: implement mid2Pre()
-    if(stackTest == nullptr){
+    if (stackTest == nullptr) {
         stackTest = new StackTest();
     }
-    const char* s2 = env->GetStringUTFChars(s, 0);
-    char* result = stackTest->midSufix2PreSufix((char*)s2);
-    LOGV("673------中缀式子：%s  转换为前缀:%s",s2,result);
+    const char *s2 = env->GetStringUTFChars(s, 0);
+    char *result = stackTest->midSufix2PreSufix((char *) s2);
+    LOGV("673------中缀式子：%s  转换为前缀:%s", s2, result);
 }
 
-ArrayTest* arrayTest;
+ArrayTest *arrayTest;
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_array(JNIEnv *env, jobject thiz) {
     // TODO: implement array()
-    if(arrayTest == nullptr){
+    if (arrayTest == nullptr) {
         arrayTest = new ArrayTest();
     }
     arrayTest->test();
@@ -843,24 +846,24 @@ JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_migong(JNIEnv *env, jobject thiz) {
     // TODO: implement migong()
 
-    if(arrayTest == nullptr){
+    if (arrayTest == nullptr) {
         arrayTest = new ArrayTest();
     }
     arrayTest->queryPath();
 }
 
-Person* person;
-Person* person2;
+Person *person;
+Person *person2;
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_pointPassValue(JNIEnv *env, jobject thiz) {
     // TODO: implement pointPassValue()
-    if(arrayTest == nullptr){
+    if (arrayTest == nullptr) {
         arrayTest = new ArrayTest();
     }
     person = new Person(21);
     arrayTest->pointPassValue(person);
-    LOGV("709-----指针传值修改之后的值：%d",person->age);
+    LOGV("709-----指针传值修改之后的值：%d", person->age);
 
 }
 
@@ -868,77 +871,76 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_refPassValue(JNIEnv *env, jobject thiz) {
     // TODO: implement refPassValue()
-    if(arrayTest == nullptr){
+    if (arrayTest == nullptr) {
         arrayTest = new ArrayTest();
     }
     person2 = new Person(223);
     arrayTest->refPassValue(*person2);
     int a = 1;
-    int c = (a ++) + (++a) + (a++)+(++a);
-    LOGV("722-----引用传值修改之后的值：%d  c = %d",person2->age,c);
+    int c = (a++) + (++a) + (a++) + (++a);
+    LOGV("722-----引用传值修改之后的值：%d  c = %d", person2->age, c);
 
 
-
-    char  ch[4] = {'a','b','c','\0'};
+    char ch[4] = {'a', 'b', 'c', '\0'};
 
     //指向常量的指针：指向的是一个常量，"abcdefg" 为字面常量，分配在内存的常量区，内容不能改变
     //所以 str 不能改变它指向内存地址的内容，但是可以改变它的指向，比如可以让它指向另一个内存地址
     const char *str = "abcdefg";
     str = ch;
-    LOGV("727---------:%s",str);
+    LOGV("727---------:%s", str);
 
     //常量指针，本身还是一个指针，但是这个指针是一个常量，不能重新改变它的指向，但是
     //可以改变当前它指向内存地址的内容如下：
-    char s1[4] = {'a','b','c','\0'};
-    char* const p = s1;
-    LOGV("738-------常量指针初始化的地址：%p  内容为:%s",p,p);
+    char s1[4] = {'a', 'b', 'c', '\0'};
+    char *const p = s1;
+    LOGV("738-------常量指针初始化的地址：%p  内容为:%s", p, p);
     char tmp = 'c';
     //p = &tmp;  因为重新改变了它的指向  所以编译报错
     s1[0] = tmp;
-    LOGV("741-----常量改变其指向内存地址的内容之后的地址：%p  值为 ：%s",p,p);
+    LOGV("741-----常量改变其指向内存地址的内容之后的地址：%p  值为 ：%s", p, p);
 
 }
-SortMgr* sortMgr;
+SortMgr *sortMgr;
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_quickSort(JNIEnv *env, jobject thiz) {
     // TODO: implement quickSort()
-    if(sortMgr == nullptr) {
+    if (sortMgr == nullptr) {
         sortMgr = new SortMgr();
     }
-    int a[9] = {9,3,5,1,7,8,4,6,2};
-    int* b = a;
+    int a[9] = {9, 3, 5, 1, 7, 8, 4, 6, 2};
+    int *b = a;
     //LOGV("757-------:a[0]:%d",b[8]);
-    sortMgr->quickSort(a,0,8);
-    for(int i =0; i < 9; i ++ ){
-        LOGV("761--------:%d",a[i]);
+    sortMgr->quickSort(a, 0, 8);
+    for (int i = 0; i < 9; i++) {
+        LOGV("761--------:%d", a[i]);
     }
 }
 
-LinkList* linkList;
+LinkList *linkList;
 
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_linkedList(JNIEnv *env, jobject thiz) {
     // TODO: implement linkedList()
-    if(linkList == nullptr) {
+    if (linkList == nullptr) {
         linkList = new LinkList();
     }
-    int a[] = {2,1,4,5,3,6,7,9,8,0};
-    LNode* head = linkList->create(a,10);
-    LNode* reverserNode = linkList->reverseList(head);
+    int a[] = {2, 1, 4, 5, 3, 6, 7, 9, 8, 0};
+    LNode *head = linkList->create(a, 10);
+    LNode *reverserNode = linkList->reverseList(head);
 
 }
 
-Memory* memory;
+Memory *memory;
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_memoryTest(JNIEnv *env, jobject thiz) {
     // TODO: implement memoryTest()
 
-    if(memory == nullptr) {
+    if (memory == nullptr) {
         memory = new Memory();
     }
     delete memory;
@@ -949,7 +951,7 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_lambda(JNIEnv *env, jobject thiz) {
     // TODO: implement lambda()
-    if(memory == nullptr) {
+    if (memory == nullptr) {
         memory = new Memory();
     }
     memory->testLambda();
@@ -961,30 +963,30 @@ Java_come_live_ndkdemo_NativeTest_smartPoint(JNIEnv *env, jobject thiz) {
     // TODO: implement smartPoint()
     {
         SmartPoint<Computer> sp(new Computer(2300));
-        LOGV("964-----use_count = %d",*sp.use_count);
+        LOGV("964-----use_count = %d", *sp.use_count);
         SmartPoint<Computer> sp2 = sp;
-        LOGV("966-----use_count = %d",*sp2.use_count);
+        LOGV("966-----use_count = %d", *sp2.use_count);
         SmartPoint<Computer> sp3 = sp;
-        LOGV("968-----use_count = %d",*sp3.use_count);
+        LOGV("968-----use_count = %d", *sp3.use_count);
         sp->test();
     }
 
 
 }
 
-ObjPool<Car>* objPool;
-Car* tmpCar;
+ObjPool<Car> *objPool;
+Car *tmpCar;
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_getObjFromPool(JNIEnv *env, jobject thiz) {
     // TODO: implement getObjFromPool()
-    if(objPool == nullptr){
+    if (objPool == nullptr) {
         objPool = new ObjPool<Car>(10);
     }
     tmpCar = objPool->getObjFromPool();
-    if(tmpCar != nullptr){
-        LOGV("830-----从对象池取对象 车子价格:%d  颜色:%s",tmpCar->m_price,tmpCar->m_color);
+    if (tmpCar != nullptr) {
+        LOGV("830-----从对象池取对象 车子价格:%d  颜色:%s", tmpCar->m_price, tmpCar->m_color);
     }
 
 
@@ -994,49 +996,49 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_recycObj2Pool(JNIEnv *env, jobject thiz) {
     // TODO: implement recycObj2Pool()
-    if(objPool == nullptr){
+    if (objPool == nullptr) {
         objPool = new ObjPool<Car>(10);
     }
     objPool->recycObj2Pool(*tmpCar);
 }
 
 
-LruCache<char*, char*>* lrucache;
+LruCache<char *, char *> *lrucache;
 int index = 0;
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_writeCache(JNIEnv *env, jobject thiz) {
     // TODO: implement writeCache()
-    if(lrucache == nullptr) {
-        lrucache = new LruCache<char*, char*>(3);
+    if (lrucache == nullptr) {
+        lrucache = new LruCache<char *, char *>(3);
     }
-    index ++;
-    char* key = "A";
-    char* value = "this is test data";
-    lrucache->updateCache(key,value);
+    index++;
+    char *key = "A";
+    char *value = "this is test data";
+    lrucache->updateCache(key, value);
 }
 
 
-FrameQueue* frameQueue;
+FrameQueue *frameQueue;
 
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_readCache(JNIEnv *env, jobject thiz) {
     // TODO: implement readCache()
-    if(lrucache != nullptr) {
-        char* key = "A";
-        char* value = lrucache->getData(key);
+    if (lrucache != nullptr) {
+        char *key = "A";
+        char *value = lrucache->getData(key);
         lrucache->print();
-        LOGV("867----LRU 中key = %s  获取其值 value = %s：",key,value);
+        LOGV("867----LRU 中key = %s  获取其值 value = %s：", key, value);
     }
 
-    if(!frameQueue) {
-        frameQueue = new FrameQueue(5,true);
+    if (!frameQueue) {
+        frameQueue = new FrameQueue(5, true);
     }
-    Frame* vp = frameQueue->peekWritable();
+    Frame *vp = frameQueue->peekWritable();
 
-    if(vp) {
+    if (vp) {
         vp->uploaded = 0;
         vp->width = 480;
         vp->height = 640;
@@ -1047,8 +1049,8 @@ Java_come_live_ndkdemo_NativeTest_readCache(JNIEnv *env, jobject thiz) {
     }
 
 
-    Frame* vp2 = frameQueue->peekWritable();
-    if(vp2) {
+    Frame *vp2 = frameQueue->peekWritable();
+    if (vp2) {
         vp2->uploaded = 0;
         vp2->width = 580;
         vp2->height = 40;
@@ -1058,8 +1060,8 @@ Java_come_live_ndkdemo_NativeTest_readCache(JNIEnv *env, jobject thiz) {
         frameQueue->pushFrame();
     }
 
-    Frame* vp3 = frameQueue->peekWritable();
-    if(vp3) {
+    Frame *vp3 = frameQueue->peekWritable();
+    if (vp3) {
         vp3->uploaded = 0;
         vp3->width = 580;
         vp3->height = 40;
@@ -1076,28 +1078,28 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_delCache(JNIEnv *env, jobject thiz, jstring key) {
     // TODO: implement delCache()
-    const char* cacheKey = env->GetStringUTFChars(key, 0);
-    LOGV("883------收到待删除的key = %s",cacheKey);
-    if(lrucache != nullptr) {
-        char* key2 = "A";
+    const char *cacheKey = env->GetStringUTFChars(key, 0);
+    LOGV("883------收到待删除的key = %s", cacheKey);
+    if (lrucache != nullptr) {
+        char *key2 = "A";
         lrucache->remove(key2);
     }
 
-    if(frameQueue) {
-       Frame* lastFrame = frameQueue->lastFrame();
-        Frame* nextFrame = frameQueue->nextFrame();
+    if (frameQueue) {
+        Frame *lastFrame = frameQueue->lastFrame();
+        Frame *nextFrame = frameQueue->nextFrame();
         frameQueue->popFrame();
-        Frame* curFrame = frameQueue->currentFrame();
-       LOGI("977-------lastFrame = %d   curFrame = %d   nextFrame = %d",lastFrame->width,curFrame->width,nextFrame->width);
+        Frame *curFrame = frameQueue->currentFrame();
+        LOGI("977-------lastFrame = %d   curFrame = %d   nextFrame = %d", lastFrame->width,
+             curFrame->width, nextFrame->width);
     }
 }
 
 
-
-
 #include "JavaObjectMap.hpp"
+
 using namespace QuarameraJNI;
-Bomber* bomber;
+Bomber *bomber;
 
 extern "C"
 JNIEXPORT jlong JNICALL
@@ -1111,16 +1113,18 @@ Java_come_live_ndkdemo_NativeTest_initNativePtr(JNIEnv *env, jobject thiz) {
 
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_come_live_ndkdemo_NativeTest_bindNativePtr(JNIEnv *env, jobject thiz, NativeId<Aircraft> native_ptr) {
+Java_come_live_ndkdemo_NativeTest_bindNativePtr(JNIEnv *env, jobject thiz,
+                                                NativeId<Aircraft> native_ptr) {
     // TODO: implement bindNativePtr()
 
     //将传进来的指针址 赋值给 aircraft  再返回给java 层
-    Aircraft* aircraft = native_ptr.p;
+    Aircraft *aircraft = native_ptr.p;
     return reinterpret_cast<jlong>(aircraft);
 }
 extern "C"
 JNIEXPORT jint JNICALL
-Java_come_live_ndkdemo_NativeTest_exeNativeWithNativePtr(JNIEnv *env, jobject thiz, NativeId<Aircraft> native_ptr) {
+Java_come_live_ndkdemo_NativeTest_exeNativeWithNativePtr(JNIEnv *env, jobject thiz,
+                                                         NativeId<Aircraft> native_ptr) {
     // TODO: implement exeNativeWithNativePtr()
     native_ptr.p->fly();
 
@@ -1128,21 +1132,22 @@ Java_come_live_ndkdemo_NativeTest_exeNativeWithNativePtr(JNIEnv *env, jobject th
 }
 
 /**------------------------测试消息队列------------------------*/
-MessageQueue* mMsgQueue;
+MessageQueue *mMsgQueue;
 jboolean startMessageQueue = static_cast<jboolean>(true);
-Handler* mHandler;
-void *messageLoop(void *args){
-    while(startMessageQueue) {
+Handler *mHandler;
+
+void *messageLoop(void *args) {
+    while (startMessageQueue) {
         AVMessage msg;
         int retval = mHandler->msg_queue_get(mMsgQueue, &msg, 1);
         if (retval < 0) {
             LOGI("1118-------收到消息报错，退出循环 这种情况可以抛出异常");
             break;
         } else {
-            LOGI("1121-------收到 %d 消息",msg.what);
-            switch(msg.what) {
+            LOGI("1121-------收到 %d 消息", msg.what);
+            switch (msg.what) {
                 case 20220715:
-                   // mHandler->msg_free_res(&msg);
+                    // mHandler->msg_free_res(&msg);
                     break;
             }
 
@@ -1159,6 +1164,7 @@ void *messageLoop(void *args){
     }
     pthread_exit(nullptr);
 }
+
 extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_createNativeMsgQueue(JNIEnv *env, jobject thiz) {
@@ -1169,7 +1175,7 @@ Java_come_live_ndkdemo_NativeTest_createNativeMsgQueue(JNIEnv *env, jobject thiz
     mHandler->msg_queue_start(mMsgQueue);
 
     pthread_t msg_loop;
-    pthread_create(&msg_loop, nullptr, messageLoop, (void*)"messageLoop");
+    pthread_create(&msg_loop, nullptr, messageLoop, (void *) "messageLoop");
 }
 extern "C"
 JNIEXPORT void JNICALL
@@ -1177,7 +1183,7 @@ Java_come_live_ndkdemo_NativeTest_sendNativeMsg(JNIEnv *env, jobject thiz) {
     // TODO: implement sendNativeMsg()
     LOGI("1125-------发送消息  ");
     for (int i = 0; i < 50; i++) {
-        mHandler->msg_queue_put_simple1(mMsgQueue,20220715);
+        mHandler->msg_queue_put_simple1(mMsgQueue, 20220715);
     }
 }
 extern "C"
@@ -1185,40 +1191,44 @@ JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_destoryQueue(JNIEnv *env, jobject thiz) {
     // TODO: implement destoryQueue()
     startMessageQueue = static_cast<jboolean>(false);
-    LOGI("1153-------销毁队列 startMessageQueue = %d",startMessageQueue);
+    LOGI("1153-------销毁队列 startMessageQueue = %d", startMessageQueue);
     mHandler->msg_queue_abort(mMsgQueue);
 
 }
 
 struct TestThreadParams {
-    char* m_name;
+    char *m_name;
     int m_id;
-    TestThreadParams(char* name,int id) : m_name(name),m_id(id) {
+
+    TestThreadParams(char *name, int id) : m_name(name), m_id(id) {
 
     }
+
     ~TestThreadParams() {
         LOGI("TestThreadParams 析构了");
     }
 };
 
-map<int , bool> m_socketConnectedMap;
-void* startReadDataTask(void* arg) {
+map<int, bool> m_socketConnectedMap;
 
-    TestThreadParams* parasm = (TestThreadParams*)arg;
-    while(parasm && m_socketConnectedMap[parasm->m_id]) {
-        LOGI("1206-----TestThreadParams = %p   name = %s  id =  %d ", parasm,parasm->m_name,parasm->m_id);
+void *startReadDataTask(void *arg) {
+
+    TestThreadParams *parasm = (TestThreadParams *) arg;
+    while (parasm && m_socketConnectedMap[parasm->m_id]) {
+        LOGI("1206-----TestThreadParams = %p   name = %s  id =  %d ", parasm, parasm->m_name,
+             parasm->m_id);
         usleep(1000 * (parasm->m_id + 1) * 1000);
         if (parasm->m_id == 1) {
             usleep(1000 * 2 * 1000);
             m_socketConnectedMap[parasm->m_id] = false;
 
-            for (auto it = m_socketConnectedMap.begin(); it != m_socketConnectedMap.end();){
+            for (auto it = m_socketConnectedMap.begin(); it != m_socketConnectedMap.end();) {
                 if (it->first == 1) {
                     m_socketConnectedMap.erase(it++);
                     LOGV("停止残留线程 %d", 1);
                     break;
                 }
-                it ++;
+                it++;
             }
             delete parasm;
         }
@@ -1232,26 +1242,26 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_come_live_ndkdemo_NativeTest_testMap(JNIEnv *env, jobject thiz) {
     // TODO: implement testMap()
-    map<int, char*>myMap{ {1,"A"},
-                          {2,"B"},
-                          {3,"C"},
-                          {4,"D"}
+    map<int, char *> myMap{{1, "A"},
+                           {2, "B"},
+                           {3, "C"},
+                           {4, "D"}
     };
     //使用下标插入
     myMap[5] = const_cast<char *>("Tom");
-    LOGV("myMap size = %ld",myMap.size());
+    LOGV("myMap size = %ld", myMap.size());
     for (auto iter = myMap.begin(); iter != myMap.end(); ++iter) {
-        LOGI("1195-----key = %d  value = %s",iter->first, iter->second);
+        LOGI("1195-----key = %d  value = %s", iter->first, iter->second);
     }
 
     //查找
-    map<int, char*>::iterator it= myMap.find(2);
+    map<int, char *>::iterator it = myMap.find(2);
     if (it != myMap.end()) {
         LOGV("找到了 ")
-        myMap.erase (it); // b被成功删除
+        myMap.erase(it); // b被成功删除
     }
     for (auto iter = myMap.begin(); iter != myMap.end(); ++iter) {
-        LOGI("1207-----key = %d  value = %s",iter->first, iter->second);
+        LOGI("1207-----key = %d  value = %s", iter->first, iter->second);
     }
 
 //    for (int i = 0; i < 3; i ++) {
@@ -1299,13 +1309,12 @@ int startWrite = 0;
 int startRead = 0;
 
 // 写的线程的处理函数
-void* writeNum(void* arg)
-{
-    while(startWrite) {
+void *writeNum(void *arg) {
+    while (startWrite) {
         // 在程序中对读写锁加写锁, 锁定的是写操作
         pthread_rwlock_wrlock(&rwlock);
         int cur = number;
-        cur ++;
+        cur++;
         number = cur;
         LOGI("写操作完毕, number : %d, tid = %ld\n", number, pthread_self());
         pthread_rwlock_unlock(&rwlock);
@@ -1319,8 +1328,8 @@ void* writeNum(void* arg)
 // 读线程的处理函数
 // 多个线程可以如果处理动作相同, 可以使用相同的处理函数
 // 每个线程中的栈资源是独享
-void* readNum(void* arg) {
-    while(startRead) {
+void *readNum(void *arg) {
+    while (startRead) {
         // 在程序中对读写锁加读锁, 锁定的是读操作
         pthread_rwlock_rdlock(&rwlock);
         LOGI("读操作完, number = %d, tid = %ld\n", number, pthread_self());
@@ -1341,11 +1350,11 @@ Java_come_live_ndkdemo_NativeTest_testReadWriteLock(JNIEnv *env, jobject thiz) {
     // 3个写线程, 5个读的线程
     pthread_t wtid[3];
     pthread_t rtid[5];
-    for(int i=0; i<3; ++i) {
+    for (int i = 0; i < 3; ++i) {
         pthread_create(&wtid[i], NULL, writeNum, NULL);
     }
 
-    for(int i=0; i<5; ++i) {
+    for (int i = 0; i < 5; ++i) {
         pthread_create(&rtid[i], NULL, readNum, NULL);
     }
 
@@ -1381,14 +1390,14 @@ int startA = 0;
 int startB = 0;
 int isPrinting = 0;
 
-void* printA(void* arg) {
-    while(startA) {
+void *printA(void *arg) {
+    while (startA) {
         pthread_mutex_lock(&oneMutex);
         while (!isPrinting) {
             LOGI("A 正在打印  阻塞");
-            pthread_cond_wait(&oneCond,&oneMutex);
+            pthread_cond_wait(&oneCond, &oneMutex);
         }
-        printData ++;
+        printData++;
         LOGI("A 打印 printData : %d 唤醒B 打印\n", printData);
         pthread_cond_signal(&oneCond);
         isPrinting = 0;
@@ -1400,14 +1409,14 @@ void* printA(void* arg) {
     return NULL;
 }
 
-void* printB(void* arg) {
-    while(startB) {
+void *printB(void *arg) {
+    while (startB) {
         pthread_mutex_lock(&oneMutex);
         while (isPrinting) {
             LOGI("B 正在打印  阻塞");
-            pthread_cond_wait(&oneCond,&oneMutex);
+            pthread_cond_wait(&oneCond, &oneMutex);
         }
-        printData ++;
+        printData++;
         LOGI("B 打印 printData : %d 唤醒A 打印\n", printData);
         pthread_cond_signal(&oneCond);
         isPrinting = 1;
@@ -1424,7 +1433,7 @@ Java_come_live_ndkdemo_NativeTest_oneByOnePrint(JNIEnv *env, jobject thiz) {
     startA = 1;
     startB = 1;
     pthread_mutex_init(&oneMutex, NULL);
-    pthread_cond_init(&oneCond,NULL);
+    pthread_cond_init(&oneCond, NULL);
     pthread_t aTid;
     pthread_t bTid;
     pthread_create(&aTid, NULL, printA, NULL);
@@ -1438,4 +1447,173 @@ Java_come_live_ndkdemo_NativeTest_stopOneByOne(JNIEnv *env, jobject thiz) {
     startB = 0;
     pthread_mutex_destroy(&oneMutex);
     pthread_cond_destroy(&oneCond);
+}
+
+int thread1() {
+    LOGV("子线程开始执行 ID = %ld", this_thread::get_id());
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    LOGV("子线程执行结束 ");
+    return 100;
+}
+
+//测试C++ 11 thread 线程库的使用
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_testThreadCpp(JNIEnv *env, jobject thiz) {
+    // TODO: implement testThreadCpp()
+
+    //测试  C++ thread 库中的future 的使用  需要注意与join 的区别
+    LOGV("主线程ID = %ld", this_thread::get_id());
+    std::future<int> result = std::async(thread1);
+    LOGV("主线程 调用get = %d", result.get()); // get 函数 只能调一次
+    LOGV("主线程 执行结束");
+
+}
+
+//------------------------测试右值引用------------------------
+class PersonA {
+
+    char *name;
+
+public:
+
+    PersonA(const char *p) {
+        size_t n = strlen(p) + 1;
+        name = new char[n];
+        memcpy(name, p, n);
+        LOGI("164------Person 构造\n");
+    }
+
+    const PersonA &operator=(const PersonA &p) {
+        LOGI("170-----------operator=\n");
+        return *this;
+    }
+
+    PersonA(const PersonA &p) {
+        size_t n = strlen(p.name) + 1;
+        name = new char[n];
+        memcpy(name, p.name, n);
+        LOGI("169------Person 拷贝构造\n");
+    }
+
+    ~PersonA() {
+        delete[] name;
+        LOGI("172------Person 析构\n");
+    }
+};
+
+PersonA getAlice() {
+    PersonA p("alice");      // 对象创建。调用构造函数，一次 new 操作
+    return p;               // 返回值创建。调用拷贝构造函数，一次 new 操作
+    // p 析构。一次 delete 操作
+}
+
+//测试二  自实现移动主义----------------
+// 参考 https://blog.csdn.net/locahuang/article/details/118755897
+
+class MyString {
+public:
+    static size_t CCtor; //统计调用拷贝构造函数的次数
+    static size_t MCtor; //统计调用移动构造函数的次数--新增
+    static size_t CAsgn; //统计调用拷贝赋值函数的次数
+    static size_t MAsgn; //统计调用移动赋值函数的次数--新增
+
+public:
+    // 构造函数
+    MyString(const char *cstr = 0) {
+        if (cstr) {
+            m_data = new char[strlen(cstr) + 1];
+            strcpy(m_data, cstr);
+        } else {
+            m_data = new char[1];
+            *m_data = '\0';
+        }
+    }
+
+    // 拷贝构造函数
+    MyString(const MyString &str) {
+        CCtor++;
+        m_data = new char[strlen(str.m_data) + 1];
+        strcpy(m_data, str.m_data);
+    }
+
+    // 1. 移动构造函数--新增 实现移动主义这个函数必须 实现
+    // 移动构造函数与拷贝构造不同，它并不是一个重新分配一块新的空间，将要拷贝的对象复制过来，而是“偷”了过来，
+    // 将自己的指针指向别人的资源，然后将别人的指针修改为nullptr，这一步很重要，如果不将别人的指针修改为空，
+    // 那么临时对象构造的时候就会释放掉这个资源，“偷”也白偷了
+    // 2. 其实质是 浅拷贝
+    // 3. 如果我们没有提供移动构造函数，只提供了拷贝构造函数，
+    // std::move()会失效但是不会发生错误，因为编译器找不到移动构造函数就去寻找拷贝构造函数，
+    // 也这是拷贝构造函数的参数是const T&常量左值引用的原因！
+    MyString(MyString &&str) noexcept
+            : m_data(str.m_data) {
+        MCtor++;
+        str.m_data = nullptr; //不再指向之前的资源了
+    }
+
+    // 拷贝赋值函数 =号重载 实现移动主义这个函数必须 实现
+    MyString &operator=(const MyString &str) {
+        CAsgn++;
+        if (this == &str) // 避免自我赋值!!
+            return *this;
+
+        delete[] m_data;
+        m_data = new char[strlen(str.m_data) + 1];
+        strcpy(m_data, str.m_data);
+        return *this;
+    }
+
+    // 移动赋值函数 =号重载--新增
+    MyString &operator=(MyString &&str) noexcept {
+        MAsgn++;
+        if (this == &str) // 避免自我赋值!!
+            return *this;
+
+        delete[] m_data;
+        m_data = str.m_data;
+        str.m_data = nullptr; //不再指向之前的资源了
+        return *this;
+    }
+
+    ~MyString() {
+        delete[] m_data;
+    }
+
+    char *get_c_str() const { return m_data; }
+
+private:
+    char *m_data;
+};
+
+size_t MyString::CCtor = 0;
+size_t MyString::MCtor = 0;
+size_t MyString::CAsgn = 0;
+size_t MyString::MAsgn = 0;
+
+
+// std::move简介 https://blog.csdn.net/qq_41687938/article/details/119797468
+// 在C++11中，标准库在中提供了一个有用的函数std::move，std::move并不能移动任何东西，
+// 它唯一的功能是将一个左值引用强制转化为右值引用，继而可以通过右值引用使用该值，以用于移动语义。从实现上讲，
+// std::move基本等同于一个类型转换：static_cast<T&&>(lvalue);
+// 2. std::move语句可以将左值变为右值而避免拷贝构造。
+//    std::move是将对象的状态或者所有权从一个对象转移到另一个对象，只是转移，没有内存的搬迁或者内存拷贝。
+
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_testRValueRef(JNIEnv *env, jobject thiz) {
+    PersonA p = getAlice();
+    LOGV("使用右值引用 注意构造函数的调用次数");
+    const PersonA &&p2 = getAlice();// 使用右值引用  将延长临时对象的生命周期与引用一样长
+
+    LOGV("右值引用的 使用例子  移动主义");
+    vector<MyString> vecStr;
+    vecStr.reserve(1000); //先分配好1000个空间
+    for (int i = 0; i < 1000; i++) {
+        vecStr.push_back(MyString("hello"));
+    }
+    LOGI("统计调用拷贝构造函数的次数 CCtor = %d", MyString::CCtor);
+    LOGI("统计调用移动构造函数的次数 MCtor =%d", MyString::MCtor);
+    LOGI("统计调用拷贝赋值函数的次数 CAsgn = %d", MyString::CAsgn);
+    LOGI("统计调用移动赋值函数的次数 MAsgn = %d", MyString::MAsgn);
 }
