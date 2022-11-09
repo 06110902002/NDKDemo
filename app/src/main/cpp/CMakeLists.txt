@@ -50,6 +50,8 @@ add_library( # Sets the name of the library.
         utils/NDKStackUtils.cpp
         utils/JavaObjectMap.hpp
         msgqueue/Handler.cpp
+        mediacodec/MediaCodec.cpp
+        mediacodec/H264Demux.cpp
         )
 
 # Searches for a specified prebuilt library and stores the path as a
@@ -68,6 +70,7 @@ find_library( # Sets the name of the path variable.
 # 引入头文件
 #include_directories(${distribution_DIR}/include)
 include_directories(head
+        mediacodec
         model
         struct
         msgqueue
@@ -79,7 +82,8 @@ include_directories(head
 
 target_link_libraries( # Specifies the target library.
                        native-lib
-
+                        mediandk
+                        android
                        # Links the target library to the log library
                        # included in the NDK.
                        ${log-lib} )

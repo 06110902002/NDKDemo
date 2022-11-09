@@ -25,10 +25,14 @@
 #include "StackTest.h"
 #include "SmartPoint.h"
 #include "NDKStackUtils.h"
+#include "media/NdkMediaCodec.h"
+#include "media/NdkMediaFormat.h"
 #include <map>
 #include <queue>
+#include<stdlib.h>
 #include <thread>
 #include <future>
+#include <MediaCodec.h>
 
 using namespace std;
 
@@ -1616,4 +1620,36 @@ Java_come_live_ndkdemo_NativeTest_testRValueRef(JNIEnv *env, jobject thiz) {
     LOGI("统计调用移动构造函数的次数 MCtor =%d", MyString::MCtor);
     LOGI("统计调用拷贝赋值函数的次数 CAsgn = %d", MyString::CAsgn);
     LOGI("统计调用移动赋值函数的次数 MAsgn = %d", MyString::MAsgn);
+}
+
+MediaCodec* mMediaCodec;
+ANativeWindow* nativeWindow;
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_mediaCodecStart(JNIEnv *env, jobject thiz, jstring path,
+                                             jobject surface) {
+    mMediaCodec = new MediaCodec();
+    nativeWindow = ANativeWindow_fromSurface(env,surface);
+
+    AMediaFormat* format = AMediaFormat_new();
+    AMediaFormat_setString(format, "mime", "video/avc");
+    AMediaFormat_setInt32(format,AMEDIAFORMAT_KEY_WIDTH,672);
+    AMediaFormat_setInt32(format,AMEDIAFORMAT_KEY_HEIGHT,378);
+
+    mMediaCodec->start(nativeWindow,"video/avc",format,0);
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_mediaCodecStop(JNIEnv *env, jobject thiz) {
+
+    if (mMediaCodec) {
+        delete mMediaCodec;
+        mMediaCodec = nullptr;
+    }
+    if (nativeWindow) {
+        ANativeWindow_release(nativeWindow);
+        nativeWindow = nullptr;
+    }
+
 }

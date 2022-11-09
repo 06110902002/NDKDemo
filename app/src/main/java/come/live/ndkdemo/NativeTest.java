@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import android.nfc.Tag;
 import android.util.Log;
+import android.view.Surface;
 
 /**
  * author         hengyang.lxb
@@ -217,4 +218,9 @@ public class NativeTest {
     public native void testMap();
 
     public native void testRValueRef();
+
+    public native void mediaCodecStart(String path, Surface surface);
+
+    public native void mediaCodecStop();
+
 }

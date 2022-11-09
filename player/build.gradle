@@ -1,6 +1,6 @@
 apply plugin: 'com.android.library'
 
-def platformVersion = 15
+def platformVersion = 21
 android {
     compileSdkVersion 30
     buildToolsVersion "30.0.2"

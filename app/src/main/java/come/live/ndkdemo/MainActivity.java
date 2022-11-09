@@ -7,6 +7,7 @@ import java.util.List;
 import android.app.Activity;
 import android.content.Intent;
 import android.inputmethodservice.Keyboard;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.Editable;
@@ -14,6 +15,9 @@ import android.text.InputType;
 import android.text.TextWatcher;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.SurfaceHolder;
+import android.view.SurfaceView;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
@@ -23,6 +27,8 @@ import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Spinner;
 import android.widget.Toast;
+
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.TextView;
@@ -43,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private GameEditText mEditText;
      String lastText;
      private FrameLayout mLayout;
+    SurfaceView surfaceView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -198,6 +205,37 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 nativeTest.testRValueRef();
+            }
+        });
+        findViewById(R.id.btn_native_mediacodec).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nativeTest.mediaCodecStart(null,surfaceView.getHolder().getSurface());
+            }
+        });
+        findViewById(R.id.btn_native_mediacodec_stop).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                nativeTest.mediaCodecStop();
+            }
+        });
+        surfaceView = findViewById(R.id.surface_view);
+        surfaceView.getHolder().addCallback(new SurfaceHolder.Callback() {
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+            @Override
+            public void surfaceCreated(SurfaceHolder holder) {
+
+
+            }
+
+            @Override
+            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
+                LogUtils.v("width:"+width+" height:"+height);
+            }
+
+            @RequiresApi(api = Build.VERSION_CODES.JELLY_BEAN)
+            @Override
+            public void surfaceDestroyed(SurfaceHolder holder) {
             }
         });
 
