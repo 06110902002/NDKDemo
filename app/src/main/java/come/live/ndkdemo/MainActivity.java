@@ -298,6 +298,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        findViewById(R.id.btn_jni).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (nativeTest != null) {
+                    nativeTest.testJNIMem();
+                }
+            }
+        });
+        findViewById(R.id.btn_mem_pool).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (nativeTest != null) {
+                    nativeTest.testMemPool();
+                }
+            }
+        });
+        findViewById(R.id.btn_nginx_mem_pool).setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (nativeTest != null) {
+                    nativeTest.testNginxMemPool();
+                }
+            }
+        });
     }
 
     private void sumArrayByNative() {

@@ -223,4 +223,10 @@ public class NativeTest {
 
     public native void mediaCodecStop();
 
+    public native void testJNIMem();
+
+    public native void testMemPool();
+
+    public native void testNginxMemPool();
+
 }

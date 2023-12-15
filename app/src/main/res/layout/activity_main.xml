@@ -30,6 +30,12 @@
            android:text="获取原生对象"
            android:layout_width="wrap_content"
            android:layout_height="wrap_content" />
+       <Button
+           android:id="@+id/btn_nginx_mem_pool"
+           android:text="nginx内存池"
+           android:textSize="10sp"
+           android:layout_width="wrap_content"
+           android:layout_height="wrap_content" />
 
    </LinearLayout>
 
@@ -199,6 +205,19 @@
         <Button
             android:id="@+id/btn_native_mediacodec_stop"
             android:text="MediaCodec停止"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+        <Button
+            android:id="@+id/btn_jni"
+            android:text="jni内存"
+            android:textSize="10sp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <Button
+            android:id="@+id/btn_mem_pool"
+            android:text="定长内存池"
             android:textSize="10sp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content" />

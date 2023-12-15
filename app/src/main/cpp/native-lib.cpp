@@ -33,6 +33,8 @@
 #include <thread>
 #include <future>
 #include <MediaCodec.h>
+#include <MemPool.h>
+#include <NginxMemPool.h>
 
 using namespace std;
 
@@ -71,16 +73,47 @@ void testTemplateClass() {
 jboolean startProConsumer = true;
 SafeQueue<char *> base;
 
+struct TE {
+
+    TE() {
+        LOGV("262--------申请对象 = %p \n",this);
+    }
+    ~TE() {
+        LOGV("262--------释放对象 = %p \n",this);
+    }
+    int tt;
+    char str[3500*3];
+    int rr[1024 * 4];
+    int rr2[1024 * 4];
+    int rr3[1024 * 40];
+    int tr;
+};
+
 void *produce(void *args) {
     int i = 0;
     while (startProConsumer) {
-        int tmp = i++;
+//        int tmp = i++;
+//
+//        char str[35];
+//        sprintf(str, "商品%d", tmp);
+//        base.push(str);
+//        LOGV("65-----生产者生产 :%d  号商品,仓库中有:%d 个商品", tmp, base.size());
+        sleep(0.01);
 
-        char str[35];
-        sprintf(str, "商品%d", tmp);
-        base.push(str);
-        LOGV("65-----生产者生产 :%d  号商品,仓库中有:%d 个商品", tmp, base.size());
-        sleep(0.04);
+        for (int i =0; i < 1000; i ++) {
+            struct TE te;
+            te.tt = 1024;
+            te.tr = 2033;
+            te.str[i] = static_cast<char>('222');
+            for (int j = 0; j < 1000; j ++) {
+                struct TE te2;
+                te2.tt = 1024;
+                te2.tr = 2033;
+                te2.str[i] = static_cast<char>('222');
+                LOGV("263--------te2 = %p  size0f(te2) = %ld\n",&te2,sizeof (te2));
+            }
+            LOGV("263--------te = %p  size0f(te) = %ld\n",&te,sizeof (te));
+        }
     }
     LOGV("76-------生产者 停止工作");
     pthread_exit(nullptr);
@@ -1653,3 +1686,102 @@ Java_come_live_ndkdemo_NativeTest_mediaCodecStop(JNIEnv *env, jobject thiz) {
     }
 
 }
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_testJNIMem(JNIEnv *env, jobject thiz) {
+    jint i = 0;
+    jstring str;
+    for(; i<100000000; i++) {
+        str = env->NewStringUTF("0");
+        env->DeleteLocalRef(str);
+    }
+
+}
+
+
+
+/**-------------------------测试定长内存池---------------------------*/
+//静态成员变量，类外初始化
+template<typename T>
+size_t MemPool<T>::_size = MemPool<T>::setSize();
+struct TreeNode
+{
+    TreeNode* next;
+    int _val;
+    char data[1920*1080*4];
+    TreeNode* _left;
+    TreeNode* _right;
+};
+
+vector<TreeNode*> v;
+MemPool<TreeNode> mp;
+
+
+void testMemPool() {
+    clock_t start = clock();
+
+    for (int i = 0; i < 10; i++)
+    {
+
+        TreeNode* mem = mp.New();
+        mem->_val = i + 10;
+        //LOGI(" i = %d  mem add = %p \n",i,mem);
+        v.push_back(mem);
+
+        //mp.Delete(v[i]);
+
+//          TreeNode* mem = new TreeNode();
+//          v.push_back(mem);
+//          delete v[i];
+    }
+
+    for (int i = 0; i < 10; i++)
+    {
+        mp.Delete(v[i]);
+
+        //delete v[i];
+    }
+
+    clock_t end = clock();
+
+    // 计算函数执行时间，单位是毫秒
+    double elapsed_time = (end - start) / (double)CLOCKS_PER_SEC * 1000;
+    std::cout << "函数执行时间：" << elapsed_time << "毫秒" << std::endl;
+
+    LOGI("-----函数执行时间：= %f ms",elapsed_time);
+
+}
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_testMemPool(JNIEnv *env, jobject thiz) {
+    testMemPool();
+}
+/**-------------------------测试定长内存池---------------------------*/
+
+
+/**-------------------------测试nginx 内存池---------------------------*/
+NginxMemPool* nginxMemPool;
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_come_live_ndkdemo_NativeTest_testNginxMemPool(JNIEnv *env, jobject thiz) {
+    if (!nginxMemPool) {
+        nginxMemPool = new NginxMemPool();
+    }
+    struct mp_pool_s *p = nginxMemPool->mp_create_pool(PAGE_SIZE);
+    nginxMemPool->monitor_mp_poll(p, "create memory pool");
+
+    clock_t start = clock();
+    void *mp[30];
+    int i;
+    for (i = 0; i < 30; i++) {
+        mp[i] = nginxMemPool->mp_malloc(p, 512);
+        //直接申请内存
+        //mp[i] = malloc(4);
+    }
+    clock_t end = clock();
+    double elapsed_time = (end - start) / (double) CLOCKS_PER_SEC * 1000;
+    LOGI("函数执行时间：%lf", elapsed_time);
+
+}
+/**-------------------------测试nginx 内存池---------------------------*/

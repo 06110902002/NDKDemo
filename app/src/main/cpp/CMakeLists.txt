@@ -46,6 +46,7 @@ add_library( # Sets the name of the library.
         utils/SocketMgr.cpp
         model/BaseMsgEntity.cpp
         struct/LruCache.cpp
+        struct/NginxMemPool.cpp
         struct/queue/FrameQueue.cpp
         utils/NDKStackUtils.cpp
         utils/JavaObjectMap.hpp
